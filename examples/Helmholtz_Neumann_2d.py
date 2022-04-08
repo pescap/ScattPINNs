@@ -29,7 +29,7 @@ def pde(x, y):
     f = k0 ** 2 * sin(k0 * x[:, 0:1]) * sin(k0 * x[:, 1:2])
     return -dy_xx - dy_yy - k0 ** 2 * y - f
 
-
+# WORK
 def func(x):
     return np.sin(k0 * x[:, 0:1]) * np.sin(k0 * x[:, 1:2])
 
