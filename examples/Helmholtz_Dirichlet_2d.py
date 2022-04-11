@@ -5,7 +5,7 @@ import numpy as np
 # General parameters
 n = 2
 precision_train = 10
-precision_test = 30
+precision_test = 10
 hard_constraint = True
 weights = 100  # if hard_constraint == False
 epochs = 5000
