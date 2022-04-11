@@ -21,4 +21,10 @@ jobs:
       run: |
         pip install -r requirements.txt
         DDEBACKEND=tensorflow.compat.v1 python -c "import deepxde"
-        echo pwd
+        echo $pwd
+
+    - name: Run unit tests
+      run: | 
+        cd examples
+        python Helmholtz_Dirichlet_2d.py
+      
