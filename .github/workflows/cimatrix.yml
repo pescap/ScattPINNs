@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  unit_tests:
+     strategy:
+        fail-fast: true
+        matrix:
+           scr: ['Helmholtz_Dirichlet_2d', 'Helmholtz_Neumann_2d']
+     name: ${{ matrix.scr }} 
+     runs-on: ubuntu-latest
+
+     steps:
+     - name: Checkout
+       uses: actions/checkout@v1
+
+     - name: Install DeepXDE
+       run: |
+        pip install -r requirements.txt
+        DDEBACKEND=tensorflow.compat.v1 python -c "import deepxde"
+        echo $pwd
+
+     - name: Run test
+       run: | 
+        cd examples
+        python ${{ matrix.scr }}.py
+
