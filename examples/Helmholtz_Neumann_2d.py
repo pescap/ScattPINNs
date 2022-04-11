@@ -26,12 +26,14 @@ def pde(x, y):
     dy_xx = dde.grad.hessian(y, x, i=0, j=0)
     dy_yy = dde.grad.hessian(y, x, i=1, j=1)
 
-    f = k0 ** 2 * cos(k0 * x[:, 0:1]) * sin(k0 * x[:, 1:2])
+    f = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
     return -dy_xx - dy_yy - k0 ** 2 * y - f
+
 
 # WORK / TODO /WORKING ON TRAVIS WHY
 def func(x):
     return np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
+
 
 def boundary(_, on_boundary):
     return on_boundary
@@ -67,11 +69,8 @@ net = dde.nn.FNN(
 model = dde.Model(data, net)
 loss_weights = [1, weights]
 model.compile(
-        "adam",
-        lr=learning_rate,
-        metrics=["l2 relative error"],
-        loss_weights=loss_weights,
-    )
+    "adam", lr=learning_rate, metrics=["l2 relative error"], loss_weights=loss_weights,
+)
 
 
 losshistory, train_state = model.train(epochs=epochs)
