@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  unit_tests:
+    name: Unit Tests
+    runs-on: macOS-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Install DeepXDE
+      run: pip install deepxde
