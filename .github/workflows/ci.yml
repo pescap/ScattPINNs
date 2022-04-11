@@ -19,6 +19,6 @@ jobs:
 
     - name: Install DeepXDE
       run: |
-        pip install deepxde
+        pip install -r requirements.txt
         DDEBACKEND=tensorflow.compat.v1 python -c "import deepxde"
         echo pwd
