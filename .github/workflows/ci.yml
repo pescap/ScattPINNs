@@ -10,21 +10,21 @@ on:
 
 jobs:
   unit_tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
+     strategy:
+        fail-fast: true
+        matrix:
+           scr: ['Helmholtz_Dirichlet_2d', 'Helmholtz_Neumann_2d']
+     name: ${{ matrix.scr }} 
+     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v1
+     steps:
+     - name: Checkout
+       uses: actions/checkout@v1
 
-    - name: Install DeepXDE
-      run: |
+     - name: Install DeepXDE
+       run: |
         pip install -r requirements.txt
-        DDEBACKEND=tensorflow.compat.v1 python -c "import deepxde"
-        echo $pwd
-
-    - name: Run unit tests
-      run: | 
+     - name: Run test
+       run: | 
         cd examples
-        python Helmholtz_Dirichlet_2d.py
-      
+        python ${{ matrix.scr }}.py
