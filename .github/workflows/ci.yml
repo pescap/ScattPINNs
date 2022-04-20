@@ -26,5 +26,5 @@ jobs:
         pip install -r requirements.txt
      - name: Run test
        run: | 
-        cd examples
+        cd examples/forward/
         python ${{ matrix.scr }}.py
