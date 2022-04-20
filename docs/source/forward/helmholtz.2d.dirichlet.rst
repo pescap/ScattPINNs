@@ -1,4 +1,4 @@
-Helmholtz equation over a 2D square domain
+Helmholtz equation with Dirichlet boundary conditions over a 2D square domain
 ========================================================================
 
 Problem setup
