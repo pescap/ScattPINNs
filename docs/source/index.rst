@@ -10,6 +10,7 @@ Welcome to ScattPINNs's documentation!
   :maxdepth: 2
 
   forward/helmholtz.2d.dirichlet
+  forward/helmholtz.2d.neumann
 
 
 Indices and tables
