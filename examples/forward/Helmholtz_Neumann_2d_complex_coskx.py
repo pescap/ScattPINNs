@@ -8,7 +8,7 @@ precision_train = 10
 precision_test = 10
 hard_constraint = True
 weights = 100  # if hard_constraint == False
-epochs = 50000
+epochs = 5000 # tested with 50.000 epochs.
 parameters = [1e-3, 4, 80, "sin"]
 
 # learning rate
