@@ -8,7 +8,7 @@ precision_train = 10
 precision_test = 10
 hard_constraint = True
 weights = 100  # if hard_constraint == False
-epochs = 25000 #TODO, testing, 25000 for worflow testing
+epochs = 5000 #TODO, testing, 25000 for worflow testing
 parameters = [1e-3, 4, 80, "sin"]
 
 # learning rate
