@@ -45,7 +45,7 @@ def pde(x, y):
             -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
 
 
-# WORK / TODO /WORKING ON TRAVIS WHY
+#Maybe not well implemented, chould define func0(x), func1(x) for each real and imag part 
 def func(x):
     real = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
     imag = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
@@ -65,7 +65,7 @@ nx_train = int(1 / hx_train)
 
 hx_test = wave_len / precision_test
 nx_test = int(1 / hx_test)
-
+#bc = dde.icbc.NeumannBC(geom, func, lambda x_, boundary, component=0,1)
 bcRe = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=0)
 bcIm = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=1)
 
