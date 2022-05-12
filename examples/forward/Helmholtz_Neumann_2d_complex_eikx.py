@@ -40,22 +40,38 @@ def pde(x, y):
     dyIm_yy = dde.grad.hessian(y, x, component=1, i=1, j=1)
     
 
-    fRe = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
-    fIm = k0 ** 2 * sin(k0 * x[:, 0:1]) * sin(k0 * x[:, 1:2])
+    fRe = k0 ** 2 * cos(k0 * x[:, 0:1])
+    fIm = k0 ** 2 * sin(k0 * x[:, 1:2])
     
     return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe - fRe,
             -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
 
 
-
 def func(x):
-    real = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
-    imag = np.sin(k0 * x[:, 0:1]) * np.sin(k0 * x[:, 1:2])
+    real = np.real(np.exp(1j * k0 * x[:, 0:1]))
+    imag = np.imag(np.exp(1j * k0 * x[:, 0:1]))
     return np.hstack((real, imag))
+
+
+#def func(x):
+#    real = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
+#   imag = np.sin(k0 * x[:, 0:1]) * np.sin(k0 * x[:, 1:2])
+#    return np.hstack((real, imag))
 
 
 def boundary(_, on_boundary):
     return on_boundary
+
+def func0(x):
+    normal = geom.boundary_normal(x)
+    g0 = np.real(1j * k0 * np.exp(1j * k0 * x[:, 0:1]) * (normal[:, 0:1]-1))
+    return g0
+
+def func1(x):
+    normal = geom.boundary_normal(x)
+    g1 = np.imag(1j * k0 * np.exp(1j * k0 * x[:, 0:1]) * (normal[:, 0:1]-1))
+    return g1
+
 
 
 geom = dde.geometry.Rectangle([0, 0], [1, 1])
@@ -68,8 +84,8 @@ nx_train = int(1 / hx_train)
 hx_test = wave_len / precision_test
 nx_test = int(1 / hx_test)
 
-bcRe = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=0)
-bcIm = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=1)
+bcRe = dde.icbc.NeumannBC(geom, func0, boundary, component=0)
+bcIm = dde.icbc.NeumannBC(geom, func1, boundary, component=1)
 
 bcs = [bcRe, bcIm]
 
