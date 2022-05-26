@@ -4,19 +4,30 @@ Helmholtz equation with Neumann boundary conditions over a 2D square complex dom
 Problem setup
 --------------
 
-For a wavenumber :math:`k_0 = 2\pi n` with :math:`n = 2`, we will solve a Helmholtz equation:
+For a wavenumber :math:`k_0 = 2\pi n` with :math:`n = 2`, we will solve a Helmholtz equation for :math:`u = uRe + 1j * uIm:``
 
 .. math:: - u_{xx}-u_{yy} - k_0^2 u = f, \qquad  \Omega = [0,1]^2
+
 
 with the Neumann boundary conditions
 
 .. math:: \nabla u(x,y) \cdot n =0, \qquad (x,y)\in \partial \Omega
 
-with :math:`n` the normal exterior vector and a source term :math:`f(x,y) = k_0^2 \cos(k_0 x)\cos(k_0 y)`.
+with :math:`n` the normal exterior vector and a source term 
+
+.. math:: f(x,y) = (1 + 1j) k_0^2 \cos(k_0 x)\cos(k_0 y) = fRe + 1j fIm.
 
 Remark that the exact solution reads:
 
-.. math:: u(x,y)= \cos(k_0 x)\cos(k_0 y)
+.. math:: u(x,y)=(1 + 1j) \cos(k_0 x)\cos(k_0 y)
+
+Projection to the real and imaginary axes for :math:`u = uR + 1j * uIm` leads to:
+
+.. math:: - uRe_{xx}-uRe_{yy} - k_0^2 uRe = fRe, \qquad  \Omega = [0,1]^2
+
+and
+
+.. math:: - uIm_{xx}-uIm_{yy} - k_0^2 uIm = fIm, \qquad  \Omega = [0,1]^2
 
 This example is the Neumann boundary condition conterpart to `this Dolfinx tutorial <https://github.com/FEniCS/dolfinx/blob/main/python/demo/helmholtz2D/demo_helmholtz_2d.py>`_. One can refer to Ihlenburg\'s book \"Finite Element Analysis of Acoustic Scattering\" p138-139 for more details.
 
