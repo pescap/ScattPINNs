@@ -40,23 +40,23 @@ def pde(x, y):
     dyIm_yy = dde.grad.hessian(y, x, component=1, i=1, j=1)
     
 
-    fRe = k0 ** 2 * cos(k0 * x[:, 0:1])
-    fIm = k0 ** 2 * sin(k0 * x[:, 0:1])
+    fRe = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
+    fIm = k0 ** 2 * sin(k0 * x[:, 0:1]) * sin(k0 * x[:, 1:2])
     
     return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe - fRe,
             -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
 
 
-def func(x):
-    real = np.real(np.exp(1j * k0 * x[:, 0:1]))
-    imag = np.imag(np.exp(1j * k0 * x[:, 0:1]))
-    return np.hstack((real, imag))
-
-
 #def func(x):
-#    real = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
-#   imag = np.sin(k0 * x[:, 0:1]) * np.sin(k0 * x[:, 1:2])
-#    return np.hstack((real, imag))
+#   real = np.real(np.exp(1j * k0 * x[:, 0:1]))
+#  imag = np.imag(np.exp(1j * k0 * x[:, 0:1]))
+# return np.hstack((real, imag))
+
+
+def func(x):
+   real = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
+   imag = np.sin(k0 * x[:, 0:1]) * np.sin(k0 * x[:, 1:2])
+   return np.hstack((real, imag))
 
 
 def boundary(_, on_boundary):
