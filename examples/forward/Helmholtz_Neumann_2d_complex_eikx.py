@@ -8,7 +8,7 @@ precision_train = 10
 precision_test = 10
 hard_constraint = True
 weights = 100  # if hard_constraint == False
-epochs = 5000 #TODO, testing, 25000 for worflow testing
+epochs = 20000 #TODO, testing, 25000 for worflow testing
 parameters = [1e-3, 4, 80, "sin"]
 
 # learning rate
@@ -40,11 +40,11 @@ def pde(x, y):
     dyIm_yy = dde.grad.hessian(y, x, component=1, i=1, j=1)
     
 
-    fRe = k0 ** 2 * cos(k0 * x[:, 0:1])
-    fIm = k0 ** 2 * sin(k0 * x[:, 0:1])
+    #fRe = k0 ** 2 * cos(k0 * x[:, 0:1])
+    #fIm = k0 ** 2 * sin(k0 * x[:, 0:1])
     
-    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe - fRe,
-            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
+    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe,
+            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm]
 
 
 def func(x):
