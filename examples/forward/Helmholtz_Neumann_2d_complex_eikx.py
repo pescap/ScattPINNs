@@ -40,11 +40,11 @@ def pde(x, y):
     dyIm_yy = dde.grad.hessian(y, x, component=1, i=1, j=1)
     
 
-    #fRe = k0 ** 2 * cos(k0 * x[:, 0:1])
-    #fIm = k0 ** 2 * sin(k0 * x[:, 0:1])
+    fRe = k0 ** 2 * cos(k0 * x[:, 0:1])
+    fIm = k0 ** 2 * sin(k0 * x[:, 0:1])
     
-    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe,
-            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm]
+    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe - fRe,
+            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
 
 
 def func(x):
