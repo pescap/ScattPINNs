@@ -84,8 +84,8 @@ nx_train = int(1 / hx_train)
 hx_test = wave_len / precision_test
 nx_test = int(1 / hx_test)
 
-bcRe = dde.icbc.NeumannBC(geom, func0, boundary, component=0)
-bcIm = dde.icbc.NeumannBC(geom, func1, boundary, component=1)
+bcRe = dde.icbc.NeumannBC(geom,lambda x: 0 , boundary, component=0)
+bcIm = dde.icbc.NeumannBC(geom,lambda x: 0 , boundary, component=1)
 
 bcs = [bcRe, bcIm]
 
