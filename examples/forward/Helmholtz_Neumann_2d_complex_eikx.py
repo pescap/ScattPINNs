@@ -1,4 +1,3 @@
-"""Backend supported: tensorflow.compat.v1, tensorflow, pytorch"""
 import deepxde as dde
 import numpy as np
 
@@ -22,7 +21,6 @@ learning_rate, num_dense_layers, num_dense_nodes, activation = parameters
 
 def pde(x, y):
     yRe, yIm = y[:, 0:1], y[:, 1:2]
-    
     dyRe_xx = dde.grad.hessian(y, x, component=0, i=0, j=0)
     dyRe_yy = dde.grad.hessian(y, x, component=0, i=1, j=1)
     
@@ -68,16 +66,11 @@ data = dde.data.PDE(
     num_test=nx_test ** 2,
 )
 
-net = dde.nn.FNN(
-    [2] + [num_dense_nodes] * num_dense_layers + [2], activation, "Glorot uniform"
-)
+net = dde.nn.FNN([2] + [num_dense_nodes] * num_dense_layers + [2], activation, "Glorot uniform")
 
 model = dde.Model(data, net)
 loss_weights = [1, 1, weights, weights]
-model.compile(
-    "adam", lr=learning_rate, metrics=["l2 relative error"], 
-    loss_weights=loss_weights
-)
+model.compile("adam", lr=learning_rate, metrics=["l2 relative error"], loss_weights=loss_weights)
 
 losshistory, train_state = model.train(epochs=epochs)
 dde.saveplot(losshistory, train_state, issave=True, isplot=True)
