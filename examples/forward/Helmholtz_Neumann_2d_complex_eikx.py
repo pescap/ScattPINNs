@@ -23,10 +23,9 @@ def pde(x, y):
     yRe, yIm = y[:, 0:1], y[:, 1:2]
     dyRe_xx = dde.grad.hessian(y, x, component=0, i=0, j=0)
     dyRe_yy = dde.grad.hessian(y, x, component=0, i=1, j=1)
-    
     dyIm_xx = dde.grad.hessian(y, x, component=1, i=0, j=0)
     dyIm_yy = dde.grad.hessian(y, x, component=1, i=1, j=1)
-    
+    #Projection to the real and imaginary axes
     fRe = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
     fIm = k0 ** 2 * sin(k0 * x[:, 0:1]) * sin(k0 * x[:, 1:2])
     
