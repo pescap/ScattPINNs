@@ -6,16 +6,16 @@ import numpy as np
 n = 2
 precision_train = 10
 precision_test = 10
-hard_constraint = True
-weights = 100  # if hard_constraint == False
-epochs = 20000 # tested with 50.000 epochs.
+weights = 100
+epochs = 50000 # tested with 50.000 epochs.
 parameters = [1e-3, 4, 80, "sin"]# learning rate, depth, width, activation function
-k0 = 1  
-wave_len = 2*np.pi / k0
-dim_x = 2 * np.pi
-n_wave = 20
-h_elem = wave_len / n_wave
-nx = int(dim_x / h_elem)
+
+if dde.backend.backend_name == "pytorch":
+    cos = dde.backend.pytorch.cos
+else:
+    from deepxde.backend import tf
+
+    cos = tf.cos
 
 learning_rate, num_dense_layers, num_dense_nodes, activation = parameters
 
@@ -28,29 +28,32 @@ def pde(x, y):
     dyIm_xx = dde.grad.hessian(y, x, component=1, i=0, j=0)
     dyIm_yy = dde.grad.hessian(y, x, component=1, i=1, j=1)
     
-    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe,
-            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm]
-
-def sol(x):
-    return np.cos(k0 * x[:, 0:1])
+    fRe = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
+    fIm = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
+    
+    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe - fRe,
+            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
 
 def func(x):
-    real = np.real(np.cos(k0 * x[:, 0:1]))
-    imag = np.imag(np.cos(k0 * x[:, 0:1]))
+    real = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
+    imag = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
     return np.hstack((real, imag))
 
 def boundary(_, on_boundary):
     return on_boundary
 
-def func0(x):
-    normal = geom.boundary_normal(x)
-    result = k0 * np.cos(k0 * x[:, 0:1]) * normal[:, 0:1]
-    return(result)
+geom = dde.geometry.Rectangle([0, 0], [1, 1])
+k0 = 2 * np.pi * n
+wave_len = 1 / n
 
-geom = dde.geometry.Rectangle([0, 0], [dim_x, dim_x])
+hx_train = wave_len / precision_train
+nx_train = int(1 / hx_train)
 
-bcRe = dde.icbc.NeumannBC(geom, func0, boundary, component=0)
-bcIm = dde.icbc.NeumannBC(geom, func0, boundary, component=1)
+hx_test = wave_len / precision_test
+nx_test = int(1 / hx_test)
+
+bcRe = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=0)
+bcIm = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=1)
 
 bcs = [bcRe, bcIm]
 
@@ -58,10 +61,10 @@ data = dde.data.PDE(
     geom,
     pde,
     bcs,
-    num_domain=nx ** 2,
-    num_boundary=4 * nx,
+    num_domain=nx_train ** 2,
+    num_boundary=4 * nx_train,
     solution=func,
-    num_test=10 * nx ** 2,
+    num_test=nx_test ** 2,
 )
 
 net = dde.nn.FNN(
