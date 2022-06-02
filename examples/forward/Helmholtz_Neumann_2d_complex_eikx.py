@@ -1,4 +1,4 @@
-"""Backend supported: tensorflow.compat.v1, tensorflow, pytorch."""
+"""Backend supported: tensorflow.compat.v1, tensorflow, pytorch"""
 import deepxde as dde
 import numpy as np
 
@@ -6,15 +6,22 @@ import numpy as np
 n = 2
 precision_train = 10
 precision_test = 10
-hard_constraint = True
-weights = 100  # if hard_constraint == False
-epochs = 20000 #TODO, testing, 25000 for worflow testing
-parameters = [1e-3, 5, 50, "sin"] #learning rate, depth, width, activation function
+weights = 100
+epochs = 50000 # tested with 50.000 epochs.
+parameters = [1e-3, 4, 80, "sin"]# learning rate, depth, width, activation function
+
+if dde.backend.backend_name == "pytorch":
+    cos = dde.backend.pytorch.cos
+else:
+    from deepxde.backend import tf
+
+    cos = tf.cos
+    sin = tf.sin
 
 learning_rate, num_dense_layers, num_dense_nodes, activation = parameters
 
 def pde(x, y):
-    yRe, yIm = y[:, 0:1], y[:, 1:2] 
+    yRe, yIm = y[:, 0:1], y[:, 1:2]
     
     dyRe_xx = dde.grad.hessian(y, x, component=0, i=0, j=0)
     dyRe_yy = dde.grad.hessian(y, x, component=0, i=1, j=1)
@@ -22,43 +29,32 @@ def pde(x, y):
     dyIm_xx = dde.grad.hessian(y, x, component=1, i=0, j=0)
     dyIm_yy = dde.grad.hessian(y, x, component=1, i=1, j=1)
     
-    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe,
-            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm]
+    fRe = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
+    fIm = k0 ** 2 * sin(k0 * x[:, 0:1]) * sin(k0 * x[:, 1:2])
+    
+    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe - fRe,
+            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
 
 def func(x):
-    real = np.real(np.exp(1j * k0 * x[:, 0:1]))
-    imag = np.imag(np.exp(1j * k0 * x[:, 0:1]))
+    real = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
+    imag = np.sin(k0 * x[:, 0:1]) * np.sin(k0 * x[:, 1:2])
     return np.hstack((real, imag))
 
 def boundary(_, on_boundary):
     return on_boundary
 
-def func0(x):
-    normal = geom.boundary_normal(x)
-    result = -k0 * np.sin(k0 * x[:, 0:1]) * normal[:, 0:1]
-    return(result)
+geom = dde.geometry.Rectangle([0, 0], [1, 1])
+k0 = 2 * np.pi * n
+wave_len = 1 / n
 
-def func1(x):
-    normal = geom.boundary_normal(x)
-    result = k0 * np.cos(k0 * x[:, 0:1]) * normal[:, 0:1]
-    return result
+hx_train = wave_len / precision_train
+nx_train = int(1 / hx_train)
 
-k0 = 1
-wave_len = 2*np.pi / k0  # wavelength
+hx_test = wave_len / precision_test
+nx_test = int(1 / hx_test)
 
-dim_x = 2 * np.pi
-n_wave = 20
-
-h_elem = wave_len / n_wave
-
-nx = int(dim_x / h_elem)
-
-geom = dde.geometry.Rectangle([0, 0], [dim_x, dim_x])
-#k0 = 2 * np.pi * n
-#wave_len = 1 / n
-
-bcRe = dde.icbc.NeumannBC(geom,func1 , boundary, component=0)
-bcIm = dde.icbc.NeumannBC(geom,func0 , boundary, component=1)
+bcRe = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=0)
+bcIm = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=1)
 
 bcs = [bcRe, bcIm]
 
@@ -66,10 +62,10 @@ data = dde.data.PDE(
     geom,
     pde,
     bcs,
-    num_domain=nx ** 2,
-    num_boundary=4 * nx,
+    num_domain=nx_train ** 2,
+    num_boundary=4 * nx_train,
     solution=func,
-    num_test=10 * nx ** 2,
+    num_test=nx_test ** 2,
 )
 
 net = dde.nn.FNN(
