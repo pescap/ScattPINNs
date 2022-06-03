@@ -28,7 +28,6 @@ def pde(x, y):
     #Projection to the real and imaginary axes
     fRe = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
     fIm = k0 ** 2 * sin(k0 * x[:, 0:1]) * sin(k0 * x[:, 1:2])
-    
     return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe - fRe,
             -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
 
