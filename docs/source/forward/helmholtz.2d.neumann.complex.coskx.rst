@@ -1,22 +1,33 @@
-Helmholtz equation with Neumann boundary conditions over a 2D square domain
-========================================================================
+Helmholtz equation with Neumann boundary conditions over a 2D square complex domain
+===================================================================================
 
 Problem setup
 --------------
 
-For a wavenumber :math:`k_0 = 2\pi n` with :math:`n = 2`, we will solve a Helmholtz equation:
+For a wavenumber :math:`k_0 = 2\pi n` with :math:`n = 2`, we will solve a Helmholtz equation for :math:`u = uRe + 1j * uIm:``
 
 .. math:: - u_{xx}-u_{yy} - k_0^2 u = f, \qquad  \Omega = [0,1]^2
+
 
 with the Neumann boundary conditions
 
 .. math:: \nabla u(x,y) \cdot n =0, \qquad (x,y)\in \partial \Omega
 
-with :math:`n` the normal exterior vector and a source term :math:`f(x,y) = k_0^2 \cos(k_0 x)\cos(k_0 y)`.
+with :math:`n` the normal exterior vector and a source term 
+
+.. math:: f(x,y) = (1 + 1j) k_0^2 \cos(k_0 x)\cos(k_0 y) = fRe + 1j fIm.
 
 Remark that the exact solution reads:
 
-.. math:: u(x,y)= \cos(k_0 x)\cos(k_0 y)
+.. math:: u(x,y)=(1 + 1j) \cos(k_0 x)\cos(k_0 y)
+
+Projection to the real and imaginary axes for :math:`u = uR + 1j * uIm` leads to:
+
+.. math:: - uRe_{xx}-uRe_{yy} - k_0^2 uRe = fRe, \qquad  \Omega = [0,1]^2
+
+and
+
+.. math:: - uIm_{xx}-uIm_{yy} - k_0^2 uIm = fIm, \qquad  \Omega = [0,1]^2
 
 This example is the Neumann boundary condition conterpart to `this Dolfinx tutorial <https://github.com/FEniCS/dolfinx/blob/main/python/demo/helmholtz2D/demo_helmholtz_2d.py>`_. One can refer to Ihlenburg\'s book \"Finite Element Analysis of Acoustic Scattering\" p138-139 for more details.
 
@@ -39,14 +50,14 @@ This code allows to use both soft and hard boundary conditions.
 
   n = 2
   precision_train = 10
-  precision_test = 30
+  precision_test = 10
   weights = 100
 
-The PINN will be trained over 5000 epochs. We define the learning rate, the number of dense layers and nodes, and the activation function. Moreover, we import the cosine function.
+The PINN will be trained over 50000 epochs. We define the learning rate, the number of dense layers and nodes, and the activation function. Moreover, we import the cosine function.
 
 .. code-block:: python
 
-  epochs = 5000
+  epochs = 50000
   parameters = [1e-3, 3, 150, "sin"]
 
   # Define sine function
@@ -64,21 +75,34 @@ Next, we express the PDE residual of the Helmholtz equation:
 .. code-block:: python
 
   def pde(x, y):
-      dy_xx = dde.grad.hessian(y, x, i=0, j=0)
-      dy_yy = dde.grad.hessian(y, x, i=1, j=1)
+    yRe, yIm = y[:, 0:1], y[:, 1:2]
+    
+    
+    dyRe_xx = dde.grad.hessian(y, x, component=0, i=0, j=0)
+    dyRe_yy = dde.grad.hessian(y, x, component=0, i=1, j=1)
+    
+    dyIm_xx = dde.grad.hessian(y, x, component=1, i=0, j=0)
+    dyIm_yy = dde.grad.hessian(y, x, component=1, i=1, j=1)
+    
 
-      f = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
-      return -dy_xx - dy_yy - k0 ** 2 * y - f
+    fRe = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
+    fIm = k0 ** 2 * cos(k0 * x[:, 0:1]) * cos(k0 * x[:, 1:2])
+    
+    return [-dyRe_xx - dyRe_yy - k0 ** 2 * yRe - fRe,
+            -dyIm_xx - dyIm_yy - k0 ** 2 * yIm - fIm]
+
 
 
 The first argument to ``pde`` is the network input, i.e., the :math:`x`-coordinate and :math:`y`-coordinate. The second argument is the network output, i.e., the solution :math:`u(x)`, but here we use ``y`` as the name of the variable.
 
-Next, we introduce the exact solution and the Neumann boundary condition. 
+Next, we introduce the exact solution and the Neumann boundary condition for a complex domain. 
 
 .. code-block:: python
 
   def func(x):
-      return np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
+    real = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
+    imag = np.cos(k0 * x[:, 0:1]) * np.cos(k0 * x[:, 1:2])
+    return np.hstack((real, imag))
 
   def boundary(_, on_boundary):
       return on_boundary
@@ -98,7 +122,8 @@ We define the boundary and the Neumann boundary conditions.
   hx_test = wave_len / precision_test
   nx_test = int(1 / hx_test)
 
-  bc = dde.icbc.NeumannBC(geom, lambda x: 0, boundary)
+  bcRe = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=0)
+  bcIm = dde.icbc.NeumannBC(geom, lambda x: 0, boundary, component=1)
 
 
 Next, we generate the training and testing points.
@@ -133,7 +158,7 @@ Now, we have the PDE problem and the network. We build a ``Model`` and define th
   if hard_constraint == True:
       model.compile("adam", lr=learning_rate, metrics=["l2 relative error"])
   else:
-      loss_weights = [1, weights]
+      loss_weights = [1, 1, weights, weights]
       model.compile(
           "adam",
           lr=learning_rate,
@@ -146,9 +171,3 @@ We first train the model for 5000 iterations with Adam optimizer:
 .. code-block:: python
 
     losshistory, train_state = model.train(epochs=epochs)
-    
-Complete code
---------------
-
-.. literalinclude:: ../../../examples/forward/Helmholtz_Neumann_2d.py
-  :language: python

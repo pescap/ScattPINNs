@@ -13,7 +13,7 @@ jobs:
      strategy:
         fail-fast: true
         matrix:
-           scr: ['Helmholtz_Dirichlet_2d', 'Helmholtz_Neumann_2d', 'Helmholtz_Neumann_2d_complex_coskx.py']
+           scr: ['Helmholtz_Dirichlet_2d', 'Helmholtz_Neumann_2d', 'Helmholtz_Neumann_2d_complex_coskx', 'Helmholtz_Neumann_2d_complex_eikx']
      name: ${{ matrix.scr }} 
      runs-on: ubuntu-latest
 
