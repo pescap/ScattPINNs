@@ -6,7 +6,7 @@ n = 2
 precision_train = 10
 precision_test = 10
 weights = 100
-epochs = 50000 # tested with 50.000 epochs.
+epochs = 5000 # tested with 50.000 epochs.
 parameters = [1e-3, 4, 80, "sin"]# learning rate, depth, width, activation function
 
 if dde.backend.backend_name == "pytorch":
