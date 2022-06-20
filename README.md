@@ -1,2 +1,6 @@
 # ScattPINNs
-Inverse and forward scattering problems via PINNs
+Inverse and forward Helmholtz scattering problems via PINNs. 
+
+Doc: https://scattpinns.readthedocs.io/
+
+
