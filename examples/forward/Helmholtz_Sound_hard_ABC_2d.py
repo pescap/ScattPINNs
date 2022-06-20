@@ -1,6 +1,5 @@
 import numpy as np
 import scipy
-import matplotlib.pyplot as plt
 import deepxde as dde
 from scipy.special import jv, hankel1
 
@@ -97,13 +96,11 @@ def func1_inner(x):
 
 
 def func0_outer(x, y):
-    normal = outer.boundary_normal(x)
     result = -k0 * y[:, 1:2]
     return result
 
 
 def func1_outer(x, y):
-    normal = outer.boundary_normal(x)
     result = k0 * y[:, 0:1]
     return result
 
