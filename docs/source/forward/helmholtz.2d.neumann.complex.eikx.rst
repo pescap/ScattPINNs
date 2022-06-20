@@ -1,5 +1,5 @@
-Helmholtz equation with Neumann boundary conditions over a 2D square complex domain
-===================================================================================
+Complex Helmholtz equation with Euler term
+==========================================
 
 Problem setup
 --------------
@@ -175,3 +175,8 @@ We first train the model for 5000 iterations with Adam optimizer:
 
     losshistory, train_state = model.train(epochs=epochs)
 
+Complete code
+--------------
+
+.. literalinclude:: ../../../examples/forward/Helmholtz_Neumann_2d_complex_eikx.py
+  :language: python
