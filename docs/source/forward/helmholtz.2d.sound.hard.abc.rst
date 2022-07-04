@@ -148,13 +148,11 @@ Next, we introduce the exact solution and the boundary conditions:
       return on_boundary and inner.on_boundary(_)
 
   def func0_inner(x):
-      #result = np.exp(1j * k0 * x[:, 0:1])
       normal = -inner.boundary_normal(x)
       g = 1j * k0 * np.exp(1j * k0 * x[:, 0:1]) * normal[:, 0:1]
       return np.real(-g)
 
   def func1_inner(x):
-      #result = np.exp(1j * k0 * x[:, 0:1])
       normal = -inner.boundary_normal(x)
       g = 1j * k0 * np.exp(1j * k0 * x[:, 0:1]) * normal[:, 0:1]
       return np.imag(-g)
@@ -191,7 +189,7 @@ Next, we choose the network. Here, we use a fully connected neural network of de
 
 .. code-block:: python
 
-  net = dde.maps.FNN([2] + [num_dense_nodes] * num_dense_layers + [2], "tanh", "Glorot uniform")
+  net = dde.maps.FNN([2] + [num_dense_nodes] * num_dense_layers + [2], activation, "Glorot uniform")
 
 Now, we have the PDE problem and the network. We build a ``Model`` and define the optimizer and learning rate.
 
