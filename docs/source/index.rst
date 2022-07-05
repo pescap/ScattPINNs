@@ -12,9 +12,8 @@ Welcome to ScattPINNs's documentation!
   forward/helmholtz.2d.dirichlet
   forward/helmholtz.2d.neumann
   forward/helmholtz.2d.neumann.complex.coskx
-  forward/helmholtz.2d.neumann.complex.eikx
+  forward/helmholtz.2d.manufactured
   forward/helmholtz.2d.sound.hard.abc
-
 Indices and tables
 ==================
 
