@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 # General parameters
 n = 1
 dim_x = 1
+R = 1/4.
 
 precision_train = 15
 precision_test = 30
@@ -14,6 +15,9 @@ weight_inner = 10
 weight_outer = 100
 epochs = 5000
 parameters = [1e-3, 3, 350, "sin"]
+
+k0 = 2 * np.pi * n
+wave_len = 1 / n
 
 # Define sine function
 if dde.backend.backend_name == "pytorch":
@@ -57,7 +61,7 @@ def neumann(x):
 
 
 outer = dde.geometry.Rectangle([-dim_x / 2.0, -dim_x / 2.0], [dim_x / 2.0, dim_x / 2.0])
-inner = dde.geometry.Disk([0, 0], dim_x / 4.0)
+inner = dde.geometry.Disk([0, 0], R)
 
 
 def boundary_outer(_, on_boundary):
@@ -69,9 +73,6 @@ def boundary_inner(_, on_boundary):
 
 
 geom = dde.geometry.CSGDifference(outer, inner)
-
-k0 = 2 * np.pi * n
-wave_len = 1 / n
 
 hx_train = wave_len / precision_train
 nx_train = int(1 / hx_train)
@@ -121,7 +122,7 @@ points_2d = points[:2, :]
 u = model.predict(points[:2, :].T)
 u = u.reshape((Nx, Ny))
 
-ide = np.sqrt(points_2d[0, :] ** 2 + points_2d[1, :] ** 2) < dim_x / 4.0
+ide = np.sqrt(points_2d[0, :] ** 2 + points_2d[1, :] ** 2) < R
 ide = ide.reshape((Nx, Nx))
 
 u_exact = func(points.T)
