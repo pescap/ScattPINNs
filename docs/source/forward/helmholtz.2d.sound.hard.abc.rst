@@ -55,7 +55,7 @@ First, the DeepXDE and required modules are imported:
   import deepxde as dde
   from scipy.special import jv, hankel1
 
-We begin by definying the general parameters for the problem.
+Then, we begin by definying the general parameters for the problem. The PINN will be trained over 5000 iterations, we also define the learning rate, the number of dense layers and nodes, and the activation function.
 
 .. code-block:: python
 
@@ -92,7 +92,6 @@ We define the analytic solution:
 
 .. code-block:: python
 
-  #Exact solution
   def sound_hard_circle_deepxde(k0, a, points):
     
     fem_xx = points[:, 0:1]
@@ -127,7 +126,7 @@ Next, we express the PDE residual of the Helmholtz equation:
               -y1_xx - y1_yy - k0 ** 2 * y1]
 
 
-Next, we introduce the exact solution and the boundary conditions:
+Then, we introduce the exact solution and both Neumann and Robin boundary conditions:
 
 .. code-block:: python
 
@@ -148,13 +147,11 @@ Next, we introduce the exact solution and the boundary conditions:
       return on_boundary and inner.on_boundary(_)
 
   def func0_inner(x):
-      #result = np.exp(1j * k0 * x[:, 0:1])
       normal = -inner.boundary_normal(x)
       g = 1j * k0 * np.exp(1j * k0 * x[:, 0:1]) * normal[:, 0:1]
       return np.real(-g)
 
   def func1_inner(x):
-      #result = np.exp(1j * k0 * x[:, 0:1])
       normal = -inner.boundary_normal(x)
       g = 1j * k0 * np.exp(1j * k0 * x[:, 0:1]) * normal[:, 0:1]
       return np.imag(-g)
@@ -191,7 +188,7 @@ Next, we choose the network. Here, we use a fully connected neural network of de
 
 .. code-block:: python
 
-  net = dde.maps.FNN([2] + [num_dense_nodes] * num_dense_layers + [2], "tanh", "Glorot uniform")
+  net = dde.maps.FNN([2] + [num_dense_nodes] * num_dense_layers + [2], activation, "Glorot uniform")
 
 Now, we have the PDE problem and the network. We build a ``Model`` and define the optimizer and learning rate.
 
