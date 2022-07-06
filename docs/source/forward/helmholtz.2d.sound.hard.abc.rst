@@ -1,42 +1,48 @@
-Helmholtz sound-hard problem over a 2D circle with absorbing boundary conditions
+Helmholtz sound-hard problem with absorbing boundary conditions
 ===================================================================================
+
+This example allows to solve the 2d Helmholtz sound-hard (scattering) problem by a R-radius circle. It is useful to understand how to:
+
+* Solve PDEs with complex values, i.e. with :math:`u = u_0 + \imath u_1`
+* Handle Robin boundary conditions for PDEs with complex values
+* Truncate unbounded domains via absorbing boundary conditions
 
 Problem setup
 --------------
 
-For a wavenumber :math:`k_0 = 2\pi n` with :math:`n = 2`, we will solve a sound-hard scattering problem for :math:`u = u^{scat} =  uRe + 1j * uIm:``
+For a wavenumber :math:`k_0= 2`, we will solve a sound-hard scattering problem for :math:`u = u^{scat} =  u_0 + \imath u_1:``
 
 .. math:: - u_{xx}-u_{yy} - k_0^2 u = 0, \qquad  \Omega = B(0,R)^c
 
 with the Neumann boundary conditions
 
-.. math:: \gamma_1 u :=\nabla u(x,y) \cdot n =0, \qquad (x,y)\in \Gamma : =\partial \Omega
+.. math:: \gamma_1 u :=\nabla u \cdot n =- u^{inc}, \qquad (x,y)\in \Gamma^{in} : = \partial (B(0,R))
 
-with :math:`n`, and suitable radiation conditions at infinity. The analytical formula for the scattered field is given by Bessel function.
+with :math:`n`, and suitable radiation conditions at infinity. The analytical formula for the scattered field is given by Bessel function (refer to `waves-fenicsx <https://github.com/samuelpgroth/waves-fenicsx/tree/master/frequency>`_).
 
-We decide to approximate the radiation conditions by absorbing boundary condition, on a :math:`dim_x` square :math:`\Gamma^{out}`. 
+We decide to truncate the domain and we approximate the radiation conditions by absorbing boundary conditions (ABCs), on a ``dim_x`` square :math:`\Gamma^{out}`. Refer to this recent `study <https://arxiv.org/pdf/2101.02154.pdf>`_ for the wavenumber analysis error.
 
-Projection to the real and imaginary axes for :math:`u = uR + 1j * uIm` leads to:
+Projection to the real and imaginary axes for :math:`u = u_0+ \imath * u_1` leads to:
 
-.. math:: - uRe_{xx}-uRe_{yy} - k_0^2 uRe = 0, \qquad  \Omega \cap D^{out}
+.. math:: - u_{0,xx}-u_{0,yy} - k_0^2 u_0 = 0 \qquad \text{in}\qquad \Omega \cap D^{out}
 
 and
 
-.. math:: - uIm_{xx}-uIm_{yy} - k_0^2 uIm = 0, \qquad  \Omega \cap D^{out}
+.. math:: - u_{1,xx}-u_{1,yy} - k_0^2 u_1 = 0 \qquad\text{in}\qquad  \Omega \cap D^{out}
 
 The boundary conditions read:
 
-.. math::\gamma_1 u =  - \gamma_1 u^{inc}, \qquad \Gamma
-.. math:: \gamma_1 u - \imath k_0 \gamma_0 = 0, \qquad \Gamma^{out}.
+.. math::\gamma_1 u =  - \gamma_1 u^{inc} \qquad \text{on} \qquad\Gamma^{in}
+.. math:: \gamma_1 u - \imath k_0 \gamma_0 = 0 \qquad \text{on} \qquad \Gamma^{out}.
 
 Absorbing boundary conditions rewrite:
 
-.. math:: \gamma_1 [uRe + \imath  uIm] - \imath k_0 [uRe + \imath uIm] = 0, \qquad \Gamma^{out}
+.. math:: \gamma_1 [u_0+ \imath  u_1] - \imath k_0 [u_0 + \imath u_1] = 0 \qquad \text{on} \qquad \Gamma^{out}
 
 i.e.
 
-.. math:: \gamma_1 uRe + k_0 uIm = 0, \qquad \Gamma^{out}
-.. math:: \gamma_1 uIm - k_0 uRe = 0, \qquad \Gamma^{out}.
+.. math:: \gamma_1 u_0 + k_0 u_1 = 0 \qquad\text{on}\qquad \Gamma^{out}
+.. math:: \gamma_1 u_1 - k_0 u_0 = 0 \qquad \text{on}\qquad\Gamma^{out}.
 
 
 This example is inspired by `this Dolfinx tutorial <https://github.com/samuelpgroth/waves-fenicsx/tree/master/frequency>`_.
@@ -50,45 +56,47 @@ First, the DeepXDE and required modules are imported:
 
 .. code-block:: python
 
-  import numpy as np
-  import matplotlib.pyplot as plt
   import deepxde as dde
+  import numpy as np
+  import scipy
   from scipy.special import jv, hankel1
 
-Then, we begin by definying the general parameters for the problem. The PINN will be trained over 5000 iterations, we also define the learning rate, the number of dense layers and nodes, and the activation function.
+
+Then, we begin by defining the general parameters for the problem. The PINN will be trained over 5000 iterations, we also define the learning rate, the number of dense layers and nodes, and the activation function.
 
 .. code-block:: python
 
-  #General parameters
   weights = 1
-  epochs = 5000 
-  parameters = [1e-2, 4, 50, "tanh"]
-  learning_rate, num_dense_layers, num_dense_nodes, activation = parameters
+  epochs = 10000
+  learning_rate = 1e-3
+  num_dense_layers = 3
+  num_dense_nodes = 350
+  activation = "sin"
 
 We set the physical parameters for the problem.
 
 .. code-block:: python
 
-  #Problem parameters
-  k0 = 1
-  wave_len = np.pi / k0
+  # Problem parameters
+  k0 = 2
+  wave_len = 2 * np.pi / k0
   dim_x = 2 * np.pi
-  R = np.pi / 2.
-  n_wave = 10
+  R = np.pi / 4.0
+  n_wave = 20
   h_elem = wave_len / n_wave
   nx = int(dim_x / h_elem)
+
 
 We define the geometry (inner and outer domains):
 
 .. code-block:: python
 
-  #Computational domain
-  outer = dde.geometry.Rectangle([-dim_x/2., -dim_x/2.], [dim_x/2., dim_x/2.])
-  inner = dde.geometry.Disk([0,0], R)
-  geom = dde.geometry.CSGDifference(outer, inner)
+  outer = dde.geometry.Rectangle([-dim_x / 2.0, -dim_x / 2.0], [dim_x / 2.0, dim_x / 2.0])
+  inner = dde.geometry.Disk([0, 0], R)
 
+  geom = outer - inner
 
-We define the analytic solution:
+We introduce the analytic solution for the sound-hard scattering problem:
 
 .. code-block:: python
 
@@ -137,14 +145,14 @@ Then, we introduce the exact solution and both Neumann and Robin boundary condit
       return np.hstack((real, imag))
 
   #Boundary conditions
-  def boundary(_, on_boundary):
+  def boundary(x, on_boundary):
       return on_boundary
 
-  def boundary_outer(_, on_boundary):
-      return on_boundary and outer.on_boundary(_)
+  def boundary_outer(x, on_boundary):
+      return on_boundary and outer.on_boundary(x)
 
-  def boundary_inner(_, on_boundary):
-      return on_boundary and inner.on_boundary(_)
+  def boundary_inner(x, on_boundary):
+      return on_boundary and inner.on_boundary(x)
 
   def func0_inner(x):
       normal = -inner.boundary_normal(x)
