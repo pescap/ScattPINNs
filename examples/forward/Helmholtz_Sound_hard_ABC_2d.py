@@ -1,20 +1,23 @@
+"""Backend supported: tensorflow.compat.v1, tensorflow, pytorch"""
+import deepxde as dde
 import numpy as np
 import scipy
-import deepxde as dde
 from scipy.special import jv, hankel1
 
 # General parameters
 weights = 1
-epochs = 5000
-parameters = [1e-2, 4, 50, "tanh"]
-learning_rate, num_dense_layers, num_dense_nodes, activation = parameters
+epochs = 10000
+learning_rate = 1e-3
+num_dense_layers = 3
+num_dense_nodes = 350
+activation = "sin"
 
 # Problem parameters
-k0 = 1
-wave_len = np.pi / k0
+k0 = 2
+wave_len = 2 * np.pi / k0
 dim_x = 2 * np.pi
-R = np.pi / 2.0
-n_wave = 10
+R = np.pi / 4.0
+n_wave = 20
 h_elem = wave_len / n_wave
 nx = int(dim_x / h_elem)
 
@@ -22,7 +25,7 @@ nx = int(dim_x / h_elem)
 outer = dde.geometry.Rectangle([-dim_x / 2.0, -dim_x / 2.0], [dim_x / 2.0, dim_x / 2.0])
 inner = dde.geometry.Disk([0, 0], R)
 
-geom = dde.geometry.CSGDifference(outer, inner)
+geom = outer - inner
 
 # Exact solution
 def sound_hard_circle_deepxde(k0, a, points):
@@ -44,7 +47,6 @@ def sound_hard_circle_deepxde(k0, a, points):
             * hankel1(n, k0 * r)
             * np.exp(1j * n * theta)
         ).ravel()
-
     return u_sc
 
 
@@ -69,27 +71,25 @@ def sol(x):
 
 
 # Boundary conditions
-def boundary(_, on_boundary):
+def boundary(x, on_boundary):
     return on_boundary
 
 
-def boundary_outer(_, on_boundary):
-    return on_boundary and outer.on_boundary(_)
+def boundary_outer(x, on_boundary):
+    return on_boundary and outer.on_boundary(x)
 
 
-def boundary_inner(_, on_boundary):
-    return on_boundary and inner.on_boundary(_)
+def boundary_inner(x, on_boundary):
+    return on_boundary and inner.on_boundary(x)
 
 
 def func0_inner(x):
-    # result = np.exp(1j * k0 * x[:, 0:1])
     normal = -inner.boundary_normal(x)
     g = 1j * k0 * np.exp(1j * k0 * x[:, 0:1]) * normal[:, 0:1]
     return np.real(-g)
 
 
 def func1_inner(x):
-    # result = np.exp(1j * k0 * x[:, 0:1])
     normal = -inner.boundary_normal(x)
     g = 1j * k0 * np.exp(1j * k0 * x[:, 0:1]) * normal[:, 0:1]
     return np.imag(-g)
@@ -105,7 +105,7 @@ def func1_outer(x, y):
     return result
 
 
-# ABC
+# ABCs
 bc0_inner = dde.NeumannBC(geom, func0_inner, boundary_inner, component=0)
 bc1_inner = dde.NeumannBC(geom, func1_inner, boundary_inner, component=1)
 
