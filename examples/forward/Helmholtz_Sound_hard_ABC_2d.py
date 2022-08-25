@@ -10,19 +10,19 @@ epochs = 10000
 learning_rate = 1e-3
 num_dense_layers = 3
 num_dense_nodes = 350
-activation = "sin"
+activation = "tanh"
 
 # Problem parameters
 k0 = 2
 wave_len = 2 * np.pi / k0
-dim_x = 2 * np.pi
-R = np.pi / 4.0
+length = 2 * np.pi
+R = np.pi / 4
 n_wave = 20
 h_elem = wave_len / n_wave
-nx = int(dim_x / h_elem)
+nx = int(length / h_elem)
 
 # Computational domain
-outer = dde.geometry.Rectangle([-dim_x / 2.0, -dim_x / 2.0], [dim_x / 2.0, dim_x / 2.0])
+outer = dde.geometry.Rectangle([-length / 2, -length / 2], [length / 2, length / 2])
 inner = dde.geometry.Disk([0, 0], R)
 
 geom = outer - inner
@@ -126,7 +126,7 @@ data = dde.data.PDE(
     solution=sol,
 )
 net = dde.maps.FNN(
-    [2] + [num_dense_nodes] * num_dense_layers + [2], "tanh", "Glorot uniform"
+    [2] + [num_dense_nodes] * num_dense_layers + [2], activation, "Glorot uniform"
 )
 model = dde.Model(data, net)
 
