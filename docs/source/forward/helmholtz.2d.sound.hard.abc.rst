@@ -1,5 +1,5 @@
-Helmholtz sound-hard problem with absorbing boundary conditions
-===================================================================================
+Helmholtz sound-hard scattering problem with absorbing boundary conditions
+=====================================================================================
 
 This example allows to solve the 2d Helmholtz sound-hard (scattering) problem by a R-radius circle. It is useful to understand how to:
 
@@ -12,7 +12,7 @@ Problem setup
 
 For a wavenumber :math:`k_0= 2`, we will solve a sound-hard scattering problem for :math:`u = u^{scat} =  u_0 + \imath u_1:``
 
-.. math:: - u_{xx}-u_{yy} - k_0^2 u = 0, \qquad  \Omega = B(0,R)^c
+.. math:: - u_{xx}-u_{yy} - k_0^2 u = 0, \qquad  \Omega = \overline{B(0,R)}^c
 
 with the Neumann boundary conditions
 
@@ -20,7 +20,7 @@ with the Neumann boundary conditions
 
 with :math:`n`, and suitable radiation conditions at infinity. The analytical formula for the scattered field is given by Bessel function (refer to `waves-fenicsx <https://github.com/samuelpgroth/waves-fenicsx/tree/master/frequency>`_).
 
-We decide to truncate the domain and we approximate the radiation conditions by absorbing boundary conditions (ABCs), on a ``dim_x`` square :math:`\Gamma^{out}`. Refer to this recent `study <https://arxiv.org/pdf/2101.02154.pdf>`_ for the wavenumber analysis error.
+We decide to truncate the domain and we approximate the radiation conditions by absorbing boundary conditions (ABCs), on a ``length`` square :math:`\Gamma^{out}`. Refer to this recent `study <https://arxiv.org/pdf/2101.02154.pdf>`_ for the wavenumber analysis error.
 
 Projection to the real and imaginary axes for :math:`u = u_0+ \imath * u_1` leads to:
 
@@ -32,7 +32,7 @@ and
 
 The boundary conditions read:
 
-.. math::\gamma_1 u =  - \gamma_1 u^{inc} \qquad \text{on} \qquad\Gamma^{in}
+.. math:: \gamma_1 u =  - \gamma_1 u^{inc} \qquad \text{on} \qquad\Gamma^{in}
 .. math:: \gamma_1 u - \imath k_0 \gamma_0 = 0 \qquad \text{on} \qquad \Gamma^{out}.
 
 Absorbing boundary conditions rewrite:
@@ -77,21 +77,20 @@ We set the physical parameters for the problem.
 
 .. code-block:: python
 
-  # Problem parameters
   k0 = 2
   wave_len = 2 * np.pi / k0
-  dim_x = 2 * np.pi
-  R = np.pi / 4.0
+  length = 2 * np.pi
+  R = np.pi / 4
   n_wave = 20
   h_elem = wave_len / n_wave
-  nx = int(dim_x / h_elem)
+  nx = int(length / h_elem)
 
 
 We define the geometry (inner and outer domains):
 
 .. code-block:: python
 
-  outer = dde.geometry.Rectangle([-dim_x / 2.0, -dim_x / 2.0], [dim_x / 2.0, dim_x / 2.0])
+  outer = dde.geometry.Rectangle([-length / 2, -length / 2], [length / 2, length / 2])
   inner = dde.geometry.Disk([0, 0], R)
 
   geom = outer - inner
@@ -120,7 +119,6 @@ Next, we express the PDE residual of the Helmholtz equation:
 
 .. code-block:: python
 
-  #Definition of the pde
   def pde(x, y):
       y0, y1 = y[:, 0:1], y[:, 1:2]
       
@@ -144,7 +142,6 @@ Then, we introduce the exact solution and both Neumann and Robin boundary condit
       imag = np.imag(result)
       return np.hstack((real, imag))
 
-  #Boundary conditions
   def boundary(x, on_boundary):
       return on_boundary
 
@@ -173,8 +170,7 @@ Then, we introduce the exact solution and both Neumann and Robin boundary condit
       normal = outer.boundary_normal(x)
       result =  k0 * y[:, 0:1]
       return result
-   
-  #ABC 
+    
   bc0_inner = dde.NeumannBC(geom, func0_inner, boundary_inner, component = 0)
   bc1_inner = dde.NeumannBC(geom, func1_inner, boundary_inner, component = 1)
 
@@ -183,33 +179,44 @@ Then, we introduce the exact solution and both Neumann and Robin boundary condit
 
   bcs = [bc0_inner, bc1_inner, bc0_outer, bc1_outer]
 
-
+ 
 Next, we define the weights for the loss function and generate the training and testing points.
 
 .. code-block:: python
 
   loss_weights = [1, 1, weights, weights, weights, weights]
-  data = dde.data.PDE(geom, pde, bcs, num_domain= nx**2, num_boundary= 8 * nx, num_test= 5 * nx ** 2, solution = sol)
+  data = dde.data.PDE(
+      geom,
+      pde,
+      bcs,
+      num_domain=nx**2,
+      num_boundary=8 * nx,
+      num_test=5 * nx **2,
+      solution=sol
+  )
 
 
 Next, we choose the network. Here, we use a fully connected neural network of depth 4 (i.e., 3 hidden layers) and width 50. Besides, we choose sin as activation function and Glorot uniform as initializer :
 
 .. code-block:: python
 
-  net = dde.maps.FNN([2] + [num_dense_nodes] * num_dense_layers + [2], activation, "Glorot uniform")
+  net = dde.maps.FNN(
+      [2] + [num_dense_nodes] * num_dense_layers + [2], activation, "Glorot uniform"
+  )
 
 Now, we have the PDE problem and the network. We build a ``Model`` and define the optimizer and learning rate.
 
 .. code-block:: python
 
-  model.compile("adam", lr=learning_rate, loss_weights=loss_weights , metrics=["l2 relative error"])
+  model.compile(
+      "adam", lr=learning_rate, loss_weights=loss_weights , metrics=["l2 relative error"]
+  )
 
 We first train the model for 5000 iterations with Adam optimizer:
 
 .. code-block:: python
 
     losshistory, train_state = model.train(epochs=epochs)
-
 
 Complete code
 --------------
