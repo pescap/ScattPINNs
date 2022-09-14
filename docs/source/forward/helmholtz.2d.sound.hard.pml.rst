@@ -1,11 +1,11 @@
-Helmholtz sound-hard scattering problem with absorbing boundary conditions
+Helmholtz sound-hard scattering problem with perfectly matched layers technique
 =====================================================================================
 
 This example allows to solve the 2d Helmholtz sound-hard (scattering) problem by a R-radius circle. It is useful to understand how to:
 
 * Solve PDEs with complex values, i.e. with :math:`u = u_0 + \imath u_1`
 * Handle Robin boundary conditions for PDEs with complex values
-* Truncate unbounded domains via absorbing boundary conditions
+* Truncate unbounded domains via perfectly matched layers technique
 
 Problem setup
 --------------
@@ -14,13 +14,13 @@ For a wavenumber :math:`k_0= 2`, we will solve a sound-hard scattering problem f
 
 .. math:: - u_{xx}-u_{yy} - k_0^2 u = 0, \qquad  \Omega = \overline{B(0,R)}^c
 
-with the Neumann boundary conditions
+with the Neumann(todo: or dirichlet?) boundary conditions
 
 .. math:: \gamma_1 u :=\nabla u \cdot n =- u^{inc}, \qquad (x,y)\in \Gamma^{in} : = \partial (B(0,R))
 
 with :math:`n`, and suitable radiation conditions at infinity. The analytical formula for the scattered field is given by Bessel function (refer to `waves-fenicsx <https://github.com/samuelpgroth/waves-fenicsx/tree/master/frequency>`_).
 
-We decide to truncate the domain and we approximate the radiation conditions by absorbing boundary conditions (ABCs), on a ``length`` square :math:`\Gamma^{out}`. Refer to this recent `study <https://arxiv.org/pdf/2101.02154.pdf>`_ for the wavenumber analysis error.
+We decide to truncate the domain and we approximate the radiation conditions by perfectly matched layers (PML), on a ``length`` square :math:`\Gamma^{out}`. Refer to this recent `study <https://arxiv.org/pdf/2101.02154.pdf>`_ for the wavenumber analysis error.
 
 Projection to the real and imaginary axes for :math:`u = u_0+ \imath * u_1` leads to:
 
@@ -30,7 +30,7 @@ and
 
 .. math:: - u_{1,xx}-u_{1,yy} - k_0^2 u_1 = 0 \qquad\text{in}\qquad  \Omega \cap D^{out}
 
-The boundary conditions read:
+TODO:The boundary conditions read:
 
 .. math:: \gamma_1 u =  - \gamma_1 u^{inc} \qquad \text{on} \qquad\Gamma^{in}
 .. math:: \gamma_1 u - \imath k_0 \gamma_0 = 0 \qquad \text{on} \qquad \Gamma^{out}.
