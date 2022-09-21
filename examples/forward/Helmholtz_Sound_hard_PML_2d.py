@@ -9,7 +9,7 @@ from deepxde.backend import tf
 
 # General parameters
 weights = 1
-epochs = 5000
+epochs = 10000
 learning_rate = 1e-3
 #(3,350)
 num_dense_layers = 3
@@ -29,13 +29,14 @@ d_absorb = np.pi /4.
 length_pml = length + d_absorb
 
 # Constantes del PML
-sigma0 = -np.log(1e-20) / (4 * d_absorb ** 3 / 3)
+#sigma0 = -np.log(1e-20) / (4 * d_absorb ** 3 / 3)
+sigma0 = -np.log(1e-20) / (4 * length_pml ** 3 / 3)
 omega = 2 * np.pi
 box = np.array([[-length / 2, -length / 2], [length / 2, length / 2]])
 
 # Computational domain
 
-outer = dde.geometry.Rectangle([-length  / 2, -length / 2], [length / 2, length / 2])
+#outer = dde.geometry.Rectangle([-length  / 2, -length / 2], [length / 2, length / 2])
 inner = dde.geometry.Disk([0, 0], R)
 
 outer_pml = dde.geometry.Rectangle([- length_pml / 2, -length_pml / 2], [length_pml / 2, length_pml / 2])
@@ -85,7 +86,6 @@ def PML(x):
         return tf.cast(-_sigma(a - x) + _sigma(x - b), tf.complex64)
 
     # Understand BOX
-    #Box es la caja para la cual, luego de ser traspasada, es donde se aplica el pml, o sea, luego de length
     sigma_x = sigma(x[:, :1], box[0][0], box[1][0])
     AB1 = 1 / (1 + 1j / omega * sigma_x) ** 2
     A1, B1 = tf.math.real(AB1), tf.math.imag(AB1)
@@ -111,7 +111,7 @@ def pde(x, y):
     #1 and 3 indexes are meant for 2nd order derivatives, 2 and 4 are meant for 1st order derivatives
     A1, B1, A2, B2, A3, B3, A4, B4 = PML(x)
     
-    y0, y1 = tf.cast(y[:, 0:1],tf.float32), tf.cast(y[:, 1:2], tf.float32)
+    y0, y1 = y[:, 0:1], y[:, 1:2]
 
     y0_xx = dde.grad.hessian(y, x, component=0, i=0, j=0)
     y0_yy = dde.grad.hessian(y, x, component=0, i=1, j=1)
@@ -121,10 +121,19 @@ def pde(x, y):
     
     # Changes
     # Agregar términos del PML fuera del cuadrado de largo length
-    # Sin el termino omega converge a 10^-1
-    # return [(A1 * -y0_xx - A3* y0_yy)/omega - omega * k0**2 * y0, (B1 * -y1_xx - B3* y1_yy)/omega - omega * k0**2 * y1] #->basado en el scipt en dev
-    return [A1 * -y0_xx - A3* y0_yy - k0**2 * y0, B1 * -y1_xx - B3* y1_yy - k0**2 * y1]
+    #basado en el scipt en dev
 
+    loss_y0 = (
+        (A1 * -y0_xx + A3 * -y0_yy - k0**2 * y0) /omega
+        - (B1 * -y1_xx  + B3 * -y1_yy - k0**2 * y0) /omega
+        +  omega * y0
+    )
+    loss_y1 = (
+        (A1 * -y1_xx  + A3 * -y1_yy - k0**2 * y0 ) /omega
+        + (B1 * -y0_xx  + B3 * -y0_yy - k0**2 * y0 ) /omega
+        +  omega * y1
+    )
+    return loss_y0, loss_y1
 
 def sol(x):
     result = sound_hard_circle_deepxde(k0, R, x).reshape((x.shape[0], 1))
