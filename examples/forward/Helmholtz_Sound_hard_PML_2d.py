@@ -82,7 +82,7 @@ def PML(x):
             heav = tf.numpy_function(np.heaviside, [d,0], tf.float32)
             return 2 * sigma0 * d * heav
 
-        return tf.cast(_sigma(a - x) + _sigma(x - b), tf.complex64)
+        return tf.cast(-_sigma(a - x) + _sigma(x - b), tf.complex64)
 
     # Understand BOX
     #Box es la caja para la cual, luego de ser traspasada, es donde se aplica el pml, o sea, luego de length
