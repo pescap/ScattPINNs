@@ -107,7 +107,6 @@ def PML(x):
 # Definition of the pde
 def pde(x, y):
     #Understanding the terms:
-    #A terms are meant for real derivatives, B terms are meant for imaginary derivatives
     #1 and 3 indexes are meant for 2nd order derivatives, 2 and 4 are meant for 1st order derivatives
     A1, B1, A2, B2, A3, B3, A4, B4 = PML(x)
     
@@ -187,7 +186,6 @@ bc0_inner = dde.NeumannBC(geom, func0_inner, boundary_inner, component=0)
 bc1_inner = dde.NeumannBC(geom, func1_inner, boundary_inner, component=1)
 
 # Changes
-# Dirichlet y Robin arrojan NaN
 bc0_outer = dde.RobinBC(geom, func0_outer, boundary_outer, component=0)
 bc1_outer = dde.RobinBC(geom, func1_outer, boundary_outer, component=1)
 
