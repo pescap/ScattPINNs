@@ -9,7 +9,7 @@ from deepxde.backend import tf
 
 # General parameters
 weights = 1
-epochs = 10000
+epochs = 5000
 learning_rate = 1e-3
 #(3,350)
 num_dense_layers = 3
