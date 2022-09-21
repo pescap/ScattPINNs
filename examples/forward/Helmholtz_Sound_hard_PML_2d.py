@@ -124,11 +124,11 @@ def pde(x, y):
 
     loss_y0 = (
         (A1 * -y0_xx + A3 * -y0_yy - k0**2 * y0) /omega
-        - (B1 * -y1_xx  + B3 * -y1_yy - k0**2 * y0) /omega
+        - (B1 * -y1_xx  + B3 * -y1_yy - k0**2 * y1) /omega
         +  omega * y0
     )
     loss_y1 = (
-        (A1 * -y1_xx  + A3 * -y1_yy - k0**2 * y0 ) /omega
+        (A1 * -y1_xx  + A3 * -y1_yy - k0**2 * y1 ) /omega
         + (B1 * -y0_xx  + B3 * -y0_yy - k0**2 * y0 ) /omega
         +  omega * y1
     )
