@@ -5,10 +5,13 @@ import scipy
 from scipy.special import jv, hankel1
 from deepxde.backend import tf
 
+#dde.config.real.set_float32()
+
 # General parameters
 weights = 1
 epochs = 10000
 learning_rate = 1e-3
+#(3,350)
 num_dense_layers = 3
 num_dense_nodes = 350
 activation = "tanh"
@@ -26,13 +29,13 @@ d_absorb = np.pi /4.
 length_pml = length + d_absorb
 
 # Constantes del PML
-sigma0 = -np.log(1e-20) / (4 * length_pml ** 3 / 3)
+sigma0 = -np.log(1e-20) / (4 * d_absorb ** 3 / 3)
 omega = 2 * np.pi
 box = np.array([[-length / 2, -length / 2], [length / 2, length / 2]])
 
 # Computational domain
 
-outer = dde.geometry.Rectangle(box[0], box[1])
+outer = dde.geometry.Rectangle([-length  / 2, -length / 2], [length / 2, length / 2])
 inner = dde.geometry.Disk([0, 0], R)
 
 outer_pml = dde.geometry.Rectangle([- length_pml / 2, -length_pml / 2], [length_pml / 2, length_pml / 2])
@@ -79,9 +82,10 @@ def PML(x):
             heav = tf.numpy_function(np.heaviside, [d,0], tf.float32)
             return 2 * sigma0 * d * heav
 
-        return tf.cast(-_sigma(a - x) + _sigma(x - b), tf.complex64)
+        return tf.cast(_sigma(a - x) + _sigma(x - b), tf.complex64)
 
     # Understand BOX
+    #Box es la caja para la cual, luego de ser traspasada, es donde se aplica el pml, o sea, luego de length
     sigma_x = sigma(x[:, :1], box[0][0], box[1][0])
     AB1 = 1 / (1 + 1j / omega * sigma_x) ** 2
     A1, B1 = tf.math.real(AB1), tf.math.imag(AB1)
@@ -102,9 +106,12 @@ def PML(x):
 
 # Definition of the pde
 def pde(x, y):
-    #A1, B1, A2, B2, A3, B3, A4, B4 = PML(x)
+    #Understanding the terms:
+    #A terms are meant for real derivatives, B terms are meant for imaginary derivatives
+    #1 and 3 indexes are meant for 2nd order derivatives, 2 and 4 are meant for 1st order derivatives
+    A1, B1, A2, B2, A3, B3, A4, B4 = PML(x)
     
-    y0, y1 = y[:, 0:1], y[:, 1:2]
+    y0, y1 = tf.cast(y[:, 0:1],tf.float32), tf.cast(y[:, 1:2], tf.float32)
 
     y0_xx = dde.grad.hessian(y, x, component=0, i=0, j=0)
     y0_yy = dde.grad.hessian(y, x, component=0, i=1, j=1)
@@ -114,8 +121,9 @@ def pde(x, y):
     
     # Changes
     # Agregar términos del PML fuera del cuadrado de largo length
-    
-    return [-y0_xx - y0_yy - k0**2 * y0, -y1_xx - y1_yy - k0**2 * y1]
+    # Sin el termino omega converge a 10^-1
+    # return [(A1 * -y0_xx - A3* y0_yy)/omega - omega * k0**2 * y0, (B1 * -y1_xx - B3* y1_yy)/omega - omega * k0**2 * y1] #->basado en el scipt en dev
+    return [A1 * -y0_xx - A3* y0_yy - k0**2 * y0, B1 * -y1_xx - B3* y1_yy - k0**2 * y1]
 
 
 def sol(x):
@@ -129,9 +137,10 @@ def sol(x):
 def boundary(x, on_boundary):
     return on_boundary
 
-
+# donde es el borde outer al cual le queremos aplicar la condicion de borde externa? 
+#Se asume outer_pml, con outer se obtienen NaN en los train and test loss
 def boundary_outer(x, on_boundary):
-    return on_boundary and outer.on_boundary(x)
+    return on_boundary and outer_pml.on_boundary(x)
 
 
 def boundary_inner(x, on_boundary):
@@ -169,9 +178,16 @@ bc0_inner = dde.NeumannBC(geom, func0_inner, boundary_inner, component=0)
 bc1_inner = dde.NeumannBC(geom, func1_inner, boundary_inner, component=1)
 
 # Changes
-# Cambiar BC a Dirichlet 0?
+# Dirichlet y Robin arrojan NaN
 bc0_outer = dde.RobinBC(geom, func0_outer, boundary_outer, component=0)
 bc1_outer = dde.RobinBC(geom, func1_outer, boundary_outer, component=1)
+
+#bc0_outer = dde.DirichletBC(geom, lambda x: 0, boundary_outer, component=0)
+#bc1_outer = dde.DirichletBC(geom, lambda x: 0, boundary_outer, component=1)
+
+#Neumann? Issue ScattPINNs
+#bc0_outer = dde.NeumannBC(geom, func0_inner, boundary_outer, component=0)
+#bc1_outer = dde.NeumannBC(geom, func1_inner, boundary_outer, component=1)
 
 bcs = [bc0_inner, bc1_inner, bc0_outer, bc1_outer]
 
