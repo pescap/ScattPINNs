@@ -20,11 +20,11 @@ length = 3 * np.pi
 R = np.pi / 4
 n_wave = 10
 h_elem = wave_len / n_wave
-d_absorb = np.pi
-length_pml = length + d_absorb
-nx = int(length_pml / h_elem)
+nx = int(length / h_elem)
 
 # PML constants
+d_absorb = np.pi
+length_pml = length + d_absorb
 sigma0 = -np.log(1e-20) / (4 * d_absorb ** 3 / 3)
 box = np.array([[-length / 2, -length / 2], [length / 2, length / 2]])
 
@@ -167,6 +167,9 @@ def func1_outer(x, y):
 # ABCs
 bc0_inner = dde.NeumannBC(geom, func0_inner, boundary_inner, component=0)
 bc1_inner = dde.NeumannBC(geom, func1_inner, boundary_inner, component=1)
+
+bc0_outer = dde.RobinBC(geom, func0_outer, boundary_outer, component=0)
+bc1_outer = dde.RobinBC(geom, func1_outer, boundary_outer, component=1)
 
 bcs = [bc0_inner, bc1_inner, bc0_outer, bc1_outer]
 
